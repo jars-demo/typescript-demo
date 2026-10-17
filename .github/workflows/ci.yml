@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Streak types
+        run: npx tsc -p streak --noEmit
+      - name: Streak builds and runs
+        run: |
+          npm run streak:build
+          STREAK_FILE="$RUNNER_TEMP/habits.json" node streak/dist/cli.js add Read --emoji 📚
+          STREAK_FILE="$RUNNER_TEMP/habits.json" node streak/dist/cli.js list
+      - name: Site and all tests
+        run: npm run verify
